@@ -10,127 +10,10 @@
 using namespace std;
 
 
-class HexGrid
-{
-public:
-    HexGrid();
-    HexGrid(int width, int height);
-    int hexDistance(const Hex& a, const Hex& b);
-    std::vector<Hex> hexNeighbors(const Hex& hex);
-    void printHexGrid();
-    TArray<TArray<Hex>> ConvertVectorToTArray(const std::vector<std::vector<Hex>>& vectorGrid);
-    int GetWidth();  // Get width of the grid
-    int GetHeight(); // Get height of the grid
-
-    private:
-        std::vector<std::vector<Hex>> grid;
-
-};
-
-HexGrid::HexGrid()
-{
-}
-
-HexGrid::HexGrid(int width, int height) {
-        for (int q = 0; q < width; ++q) {
-            std::vector<Hex> column;
-            int r1 = std::max(-q, 0);  // Start row (inclusive)
-            int r2 = std::min(height, width - q);  // End row (exclusive)
-            for (int r = r1; r < r2; ++r) {
-                column.emplace_back(q, r);
-            }
-            grid.push_back(column);
-        }
-    }
-
-
-    // Function to calculate the distance between two hexes
-    int HexGrid::hexDistance(const Hex & a, const Hex & b) {
-        return (std::abs(a.q - b.q) + std::abs(a.q + a.r - b.q - b.r) + std::abs(a.r - b.r)) / 2;
-    }
-
-    // Function to find neighbors of a hex
-    std::vector<Hex> HexGrid::hexNeighbors(const Hex & hex) {
-        std::vector<Hex> neighbors;
-
-        //// Determine whether the current row is even or odd
-        bool isEvenRow = hex.r % 2 == 0;
-        bool isEvenColumn = hex.q % 2 == 0;
-
-        std::vector<std::pair<int, int>> directions;
-
-        if (isEvenRow == isEvenColumn) {
-            // Define directions
-            directions = {
-            {0, 1}, {0, -1},        // Up, Down
-            {1, 0}, {-1, 0},        // Right, Left
-            {1, hex.r % 2 == 0 ? -1 : 1}, {-1, hex.r % 2 == 0 ? -1 : 1}   // Up-right, Down-left
-            };
-        }
-        else
-        {
-			// Define directions
-			directions = {
-			{0, 1}, {0, -1},        // Up, Down
-			{1, 0}, {-1, 0},        // Right, Left
-			{1, hex.r % 2 == 0 ? 1 : -1}, {-1, hex.r % 2 == 0 ? 1 : -1}   // Up-right, Down-left
-			};
-        }
-
-        for (const auto& direction : directions) {
-            int neighbor_q = hex.q + direction.first;
-            int neighbor_r = hex.r + direction.second;
-
-            // Check if the generated neighbor is within bounds
-            if (neighbor_q >= 0 && neighbor_r >= 0 && neighbor_q < grid.size() && neighbor_r < grid[0].size()) {
-                neighbors.emplace_back(neighbor_q, neighbor_r);
-            }
-        }
-
-        return neighbors;
-    }
-
-    void HexGrid::printHexGrid() {
-        for (const auto& row : grid) {
-            FString rowStr;
-            for (const auto& hex : row) {
-                rowStr += FString::Printf(TEXT("(%d, %d) "), hex.q, hex.r);
-            }
-            UE_LOG(LogTemp, Warning, TEXT("%s"), *rowStr);
-        }
-    }
-
-
-    TArray<TArray<Hex>> HexGrid::ConvertVectorToTArray(const std::vector<std::vector<Hex>>& vectorGrid)
-    {
-        TArray<TArray<Hex>> UnrealGrid;
-
-        for (const auto& row : vectorGrid)
-        {
-            TArray<Hex> UnrealRow;
-            for (const auto& hex : row)
-            {
-                UnrealRow.Add(hex);
-            }
-            UnrealGrid.Add(UnrealRow);
-        }
-
-        return UnrealGrid;
-    }
-
-    int HexGrid::GetWidth()
-    {
-        return grid.size();
-    }
-
-    int HexGrid::GetHeight()
-    {
-        return grid.size();
-    }
-    
 Grid::Grid(TSubclassOf<AActor> HexActorEven, TSubclassOf<AActor> HexActorOdd,  float CustomXOffset, float CustomXSpacing, float CustomYSpacing)
 {
-    HexGrid hexGrid(15, 15);
+    hexGrid = HexGrid(16,16);
+
 
     UWorld* World = GEngine->GameViewport->GetWorld();
     if (!World) {
@@ -163,7 +46,6 @@ void Grid::ScaleAndSpawnNeighbors(int q, int r, float ScaleFactor, TSubclassOf<A
 {
     // Find the hexagon
     Hex hex(q, r);
-    HexGrid hexGrid(15, 15);
 
     // Find neighbors
     std::vector<Hex> neighbors = hexGrid.hexNeighbors(hex);
@@ -193,6 +75,33 @@ void Grid::ScaleAndSpawnNeighbors(int q, int r, float ScaleFactor, TSubclassOf<A
     }
 }
 
+
+void Grid::distanceToTarget(TSubclassOf<AActor> HexActorSelected, float ScaleFactor, float CustomXOffset, float CustomXSpacing, float CustomYSpacing, int aq, int ar, int bq, int br)
+{
+    Hex a(aq, ar);
+    Hex b(bq, br);
+    
+    UE_LOG(LogTemp, Warning, TEXT("Distance between (%d, %d) and (%d, %d) is %d"), a.q, a.r, b.q, b.r, hexGrid.hexDistance(a, b));
+
+    // Get world context
+    UWorld* World = GEngine->GameViewport->GetWorld(); // Assuming this is called within an actor or component with access to GetWorld()
+    if (!World) return;
+
+    // Define spawn parameters
+    FActorSpawnParameters SpawnParams;
+
+    FVector SpawnLocationA = FVector((a.q * CustomXSpacing), (a.r * CustomYSpacing) + (a.q % 2 == 0 ? 0 : CustomXOffset), 0);
+
+    FVector SpawnLocationB = FVector((b.q * CustomXSpacing), (b.r * CustomYSpacing) + (b.q % 2 == 0 ? 0 : CustomXOffset), 0);
+
+
+    // Spawn actors on hexes a and b
+    AActor* ActorA = World->SpawnActor<AActor>(HexActorSelected, SpawnLocationA, FRotator::ZeroRotator, SpawnParams);
+    AActor* ActorB = World->SpawnActor<AActor>(HexActorSelected, SpawnLocationB, FRotator::ZeroRotator, SpawnParams);
+
+    ActorA->SetActorScale3D(FVector(1, 1, ScaleFactor));
+    ActorB->SetActorScale3D(FVector(1, 1, ScaleFactor));
+}
 
 
 

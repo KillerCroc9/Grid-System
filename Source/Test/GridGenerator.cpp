@@ -32,11 +32,12 @@ void AGridGenerator::GenerateGrid()
 void AGridGenerator::findNeighbors()
 {
 	Grid Grid(HexActorEven, HexActorOdd, CustomXOffset, CustomXSpacing, CustomYSpacing);
-	Grid.ScaleAndSpawnNeighbors(q,r,ActorScale, HexActorEven, HexActorOdd, CustomXOffset, CustomXSpacing, CustomYSpacing);
+	Grid.ScaleAndSpawnNeighbors(q,r,ActorScale, HexActorRaised, HexActorRaised, CustomXOffset, CustomXSpacing, CustomYSpacing);
 }
 
 void AGridGenerator::distanceToTarget()
 {
-
+	Grid Grid(HexActorEven, HexActorOdd, CustomXOffset, CustomXSpacing, CustomYSpacing);
+	Grid.distanceToTarget(HexActorEven, ActorScale, CustomXOffset, CustomXSpacing, CustomYSpacing,aq,ar,bq,br);
 }
 

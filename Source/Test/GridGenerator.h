@@ -41,6 +41,9 @@ public:
 	TSubclassOf<AActor> HexActorOdd;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hex")
+	TSubclassOf<AActor> HexActorRaised;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hex")
 	float CustomXOffset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hex")
@@ -57,4 +60,16 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hex")
 	int32 r;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hex")
+	int32 aq;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hex")
+	int32 ar;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hex")
+	int32 bq;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hex")
+	int32 br;
 };

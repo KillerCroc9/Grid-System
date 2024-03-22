@@ -10,9 +10,14 @@
 using namespace std;
 
 
-Grid::Grid(TSubclassOf<AActor> HexActorEven, TSubclassOf<AActor> HexActorOdd,  float CustomXOffset, float CustomXSpacing, float CustomYSpacing)
+Grid::Grid()
 {
-    hexGrid = HexGrid(16,16);
+
+}
+
+Grid::Grid(TSubclassOf<AHexagon> HexagonBlueprintClass,int32 Size, float CustomXOffset, float CustomXSpacing, float CustomYSpacing)
+{
+    hexGrid = HexGrid(Size, Size);
 
 
     UWorld* World = GEngine->GameViewport->GetWorld();
@@ -27,85 +32,85 @@ Grid::Grid(TSubclassOf<AActor> HexActorEven, TSubclassOf<AActor> HexActorOdd,  f
             // Get the location to spawn the actor with the calculated x-offset
             FVector SpawnLocation = FVector((x * CustomXSpacing), (y * CustomYSpacing) + xOffset, 0);
 
-            AActor* Actor;
+            AHexagon* Actor;
             if (x % 2 == 0)
 
-                Actor = World->SpawnActor<AActor>(HexActorEven, SpawnLocation, FRotator::ZeroRotator);
+                Actor = World->SpawnActor<AHexagon>(HexagonBlueprintClass, SpawnLocation, FRotator::ZeroRotator);
         	else
-                Actor = World->SpawnActor<AActor>(HexActorOdd, SpawnLocation, FRotator::ZeroRotator);
+                Actor = World->SpawnActor<AHexagon>(HexagonBlueprintClass, SpawnLocation, FRotator::ZeroRotator);
           
 
             if (Actor) {
 
+                Actor->Q = x; // Set the Q coordinate
+                Actor->R = y; // Set the R coordinate
+
+             //   Actor->Tags.Add(FName(*FString::Printf(TEXT("GridActor_%d_%d"), x, y)));
+                  ActorsInfo.Add(FGridActorInfo(Actor, Hex(x, y)));
             }
         }
     }
 }
 
-void Grid::ScaleAndSpawnNeighbors(int q, int r, float ScaleFactor, TSubclassOf<AActor> HexActorEven, TSubclassOf<AActor> HexActorOdd, float CustomXOffset, float CustomXSpacing, float CustomYSpacing)
+void Grid::ScaleAndSpawnNeighbors(int q, int r, float ScaleFactor, float CustomXOffset, float CustomXSpacing, float CustomYSpacing)
 {
     // Find the hexagon
     Hex hex(q, r);
-
     // Find neighbors
     std::vector<Hex> neighbors = hexGrid.hexNeighbors(hex);
-
-    // Iterate through neighbors
-    for (const auto& neighbor : neighbors)
-    {
-        // Calculate world location for neighbor
-        FVector SpawnLocation = FVector((neighbor.q * CustomXSpacing), (neighbor.r * CustomYSpacing) + (neighbor.q % 2 == 0 ? 0 : CustomXOffset), 0);
-
-        UWorld* World = GEngine->GameViewport->GetWorld();
-        if (!World) {
-			return;
-		}
-        // Spawn actor
-        AActor* NeighborActor;
-        if (neighbor.q % 2 == 0)
-            NeighborActor = World->SpawnActor<AActor>(HexActorEven, SpawnLocation, FRotator::ZeroRotator);
-        else
-            NeighborActor = World->SpawnActor<AActor>(HexActorOdd, SpawnLocation, FRotator::ZeroRotator);
-
-        // Scale actor if spawned successfully
-        if (NeighborActor)
-        {
-            NeighborActor->SetActorScale3D(FVector(1, 1, ScaleFactor));
+    ResetActorScales(ResetN); // Reset the scales of the previously scaled actors
+    ResetActorScales(ResetT); // Reset the scales of the previously scaled actors 
+	ResetT.Empty();
+    ResetN.Empty();
+    for (const auto& neighbor : neighbors) {
+        // Look for an existing actor in ActorsInfo that matches the neighbor's coordinates
+        for (auto& actorInfo : ActorsInfo) {
+            if (actorInfo.Coordinates.q == neighbor.q && actorInfo.Coordinates.r == neighbor.r) {
+                // If a matching actor is found, scale it
+                if (actorInfo.Actor) {
+                    actorInfo.Actor->SetActorScale3D(FVector(1, 1, ScaleFactor));
+                    ResetN.Add(FGridActorInfo(actorInfo.Actor, Hex(neighbor.q, neighbor.r)));
+                }
+                break; // Stop searching once a match is found
+            }
         }
     }
 }
 
-
-void Grid::distanceToTarget(TSubclassOf<AActor> HexActorSelected, float ScaleFactor, float CustomXOffset, float CustomXSpacing, float CustomYSpacing, int aq, int ar, int bq, int br)
+int32 Grid::distanceToTarget(float ScaleFactor, float CustomXOffset, float CustomXSpacing, float CustomYSpacing, int aq, int ar, int bq, int br)
 {
     Hex a(aq, ar);
     Hex b(bq, br);
-    
-    UE_LOG(LogTemp, Warning, TEXT("Distance between (%d, %d) and (%d, %d) is %d"), a.q, a.r, b.q, b.r, hexGrid.hexDistance(a, b));
-
-    // Get world context
-    UWorld* World = GEngine->GameViewport->GetWorld(); // Assuming this is called within an actor or component with access to GetWorld()
-    if (!World) return;
-
-    // Define spawn parameters
-    FActorSpawnParameters SpawnParams;
-
-    FVector SpawnLocationA = FVector((a.q * CustomXSpacing), (a.r * CustomYSpacing) + (a.q % 2 == 0 ? 0 : CustomXOffset), 0);
-
-    FVector SpawnLocationB = FVector((b.q * CustomXSpacing), (b.r * CustomYSpacing) + (b.q % 2 == 0 ? 0 : CustomXOffset), 0);
-
-
-    // Spawn actors on hexes a and b
-    AActor* ActorA = World->SpawnActor<AActor>(HexActorSelected, SpawnLocationA, FRotator::ZeroRotator, SpawnParams);
-    AActor* ActorB = World->SpawnActor<AActor>(HexActorSelected, SpawnLocationB, FRotator::ZeroRotator, SpawnParams);
-
-    ActorA->SetActorScale3D(FVector(1, 1, ScaleFactor));
-    ActorB->SetActorScale3D(FVector(1, 1, ScaleFactor));
+    int32 distance = hexGrid.hexDistance(a, b);
+    UE_LOG(LogTemp, Warning, TEXT("Distance between (%d, %d) and (%d, %d) is %d"), a.q, a.r, b.q, b.r, distance);
+    ResetActorScales(ResetT); // Reset the scales of the previously scaled actors 
+    ResetActorScales(ResetN); // Reset the scales of the previously scaled actors
+    ResetN.Empty();
+    ResetT.Empty();
+    // Iterate through ActorsInfo to find and modify actors at hexes a and b
+    for (auto& actorInfo : ActorsInfo) {
+        if ((actorInfo.Coordinates.q == a.q && actorInfo.Coordinates.r == a.r) ||
+            (actorInfo.Coordinates.q == b.q && actorInfo.Coordinates.r == b.r)) {
+            // If a matching actor is found, scale it
+            if (actorInfo.Actor) {
+                actorInfo.Actor->SetActorScale3D(FVector(1, 1, ScaleFactor));
+                ResetT.Add(FGridActorInfo(actorInfo.Actor, Hex(actorInfo.Coordinates.q, actorInfo.Coordinates.r)));
+            }
+        }
+    }
+    return distance;
 }
 
 
 
-
+void Grid::ResetActorScales(TArray<FGridActorInfo> ResetArray) {
+    for (auto& actorInfo : ResetArray) {
+        if (actorInfo.Actor) {
+            actorInfo.Actor->SetActorScale3D(FVector(1, 1, 1)); // Reset to original scale
+        }
+    }
+    ResetArray.Empty(); // Optionally clear the array if these actors won't be reset again
+}
 
 
 // Example usage

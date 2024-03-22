@@ -16,6 +16,7 @@ AGridGenerator::AGridGenerator()
 void AGridGenerator::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
 // Called every frame
@@ -24,20 +25,34 @@ void AGridGenerator::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AGridGenerator::GenerateGrid()
+void AGridGenerator::GenerateGrid(int32 Size)
 {
-	Grid grid(HexActorEven, HexActorOdd, CustomXOffset, CustomXSpacing, CustomYSpacing);
+	_Grid = Grid::Grid(HexagonBlueprintClass, Size, CustomXOffset, CustomXSpacing, CustomYSpacing);
 }
 
-void AGridGenerator::findNeighbors()
+void AGridGenerator::findNeighbors(int32 Q, int32 R)
 {
-	Grid Grid(HexActorEven, HexActorOdd, CustomXOffset, CustomXSpacing, CustomYSpacing);
-	Grid.ScaleAndSpawnNeighbors(q,r,ActorScale, HexActorRaised, HexActorRaised, CustomXOffset, CustomXSpacing, CustomYSpacing);
+	_Grid.ScaleAndSpawnNeighbors(Q,R,ActorScale, CustomXOffset, CustomXSpacing, CustomYSpacing);
 }
 
-void AGridGenerator::distanceToTarget()
+int32 AGridGenerator::distanceToTarget(int32 AQ, int32 AR, int32 BQ, int32 BR)
 {
-	Grid Grid(HexActorEven, HexActorOdd, CustomXOffset, CustomXSpacing, CustomYSpacing);
-	Grid.distanceToTarget(HexActorEven, ActorScale, CustomXOffset, CustomXSpacing, CustomYSpacing,aq,ar,bq,br);
+	int32 Distance = _Grid.distanceToTarget(ActorScale, CustomXOffset, CustomXSpacing, CustomYSpacing, AQ, AR, BQ, BR);
+	return Distance;
+}
+
+TArray<FGridActorInfoWrapper> AGridGenerator::GetActorInfo()
+{
+	TArray<FGridActorInfoWrapper> Info;
+	for (auto& actorInfo : _Grid.ActorsInfo) {
+		FGridActorInfoWrapper actorInfoWrapper{};
+		actorInfoWrapper.Actor = actorInfo.Actor;
+		actorInfoWrapper.Q = actorInfo.Coordinates.q;
+		actorInfoWrapper.R = actorInfo.Coordinates.r;
+		
+		Info.Add(actorInfoWrapper);
+	}
+
+	return Info;
 }
 

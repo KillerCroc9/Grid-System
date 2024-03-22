@@ -25,9 +25,9 @@ void AGridGenerator::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AGridGenerator::GenerateGrid(int32 Size)
+void AGridGenerator::GenerateGrid(int32 Height,int32 Width)
 {
-	_Grid = Grid::Grid(HexagonBlueprintClass, Size, CustomXOffset, CustomXSpacing, CustomYSpacing);
+	_Grid = Grid::Grid(HexagonBlueprintClass, Height, Width, CustomXOffset, CustomXSpacing, CustomYSpacing);
 }
 
 void AGridGenerator::findNeighbors(int32 Q, int32 R)

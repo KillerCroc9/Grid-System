@@ -15,9 +15,9 @@ Grid::Grid()
 
 }
 
-Grid::Grid(TSubclassOf<AHexagon> HexagonBlueprintClass,int32 Size, float CustomXOffset, float CustomXSpacing, float CustomYSpacing)
+Grid::Grid(TSubclassOf<AHexagon> HexagonBlueprintClass,int32 Height, int32 Width, float CustomXOffset, float CustomXSpacing, float CustomYSpacing)
 {
-    hexGrid = HexGrid(Size, Size);
+    hexGrid = HexGrid(Height,Width);
 
 
     UWorld* World = GEngine->GameViewport->GetWorld();
@@ -126,22 +126,6 @@ void Grid::ResetActorScales(TArray<FGridActorInfo> ResetArray) {
 //    neighborStr += FString::Printf(TEXT("(%d, %d) "), neighbor.q, neighbor.r);
 //}
 //UE_LOG(LogTemp, Warning, TEXT("Neighbors of (%d, %d) are: %s"), a.q, a.r, *neighborStr);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //std::vector<std::pair<int, int>> directions;

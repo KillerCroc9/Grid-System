@@ -7,19 +7,19 @@ HexGrid::HexGrid()
    
 }
 
-
-
 HexGrid::HexGrid(int width, int height) {
-    for (int q = 0; q < width; ++q) {
-        std::vector<Hex> column;
-        int r1 = std::max(-q, 0);  // Start row (inclusive)
-        int r2 = std::min(height, width - q);  // End row (exclusive)
-        for (int r = r1; r < r2; ++r) {
-            column.emplace_back(q, r);
+    for (int r = 0; r < height; ++r) {
+        std::vector<Hex> row; // Create a new row for Hex objects.
+        for (int q = 0; q < width; ++q) {
+            // Directly construct a Hex in place at the end of the row.
+            row.emplace_back(q, r);
         }
-        grid.push_back(column);
+        // Add the completed row to the grid.
+        grid.push_back(std::move(row)); 
     }
+    printHexGrid(); 
 }
+
 
 
 
@@ -84,6 +84,7 @@ std::vector<Hex> HexGrid::hexNeighbors(const Hex& hex) {
     return neighbors;
 }
 
+// Function to print the hex grid
 void HexGrid::printHexGrid() {
     for (const auto& row : grid) {
         FString rowStr;
@@ -94,7 +95,7 @@ void HexGrid::printHexGrid() {
     }
 }
 
-
+//Wrapper Class in case we need to convert the vector to TArray
 TArray<TArray<Hex>> HexGrid::ConvertVectorToTArray(const std::vector<std::vector<Hex>>& vectorGrid)
 {
     TArray<TArray<Hex>> UnrealGrid;
@@ -114,11 +115,18 @@ TArray<TArray<Hex>> HexGrid::ConvertVectorToTArray(const std::vector<std::vector
 
 int HexGrid::GetWidth()
 {
-    return grid.size();
+    if (!grid.empty()) {
+        // Assuming all rows have the same width, return the size of the first row.
+        return grid[0].size();
+    }
+    return 0;
 }
 
 int HexGrid::GetHeight()
 {
+    if(!grid.empty()){
     return grid.size();
+    }
+    return 0;
 }
 

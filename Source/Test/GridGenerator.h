@@ -46,7 +46,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable)
-	void GenerateGrid(int32 Size);
+	void GenerateGrid(int32 Height, int32 Width);
 
 	UFUNCTION(BlueprintCallable)
 	void findNeighbors(int32 Q, int32 R);

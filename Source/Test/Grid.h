@@ -27,7 +27,7 @@ public:
 	
 	Grid();
 
-	Grid(TSubclassOf<AHexagon> HexagonBlueprintClass, int32 Size, float CustomXOffset, float CustomXSpacing, float CustomYSpacing);
+	Grid(TSubclassOf<AHexagon> HexagonBlueprintClass,int32 Height, int32 Width, float CustomXOffset, float CustomXSpacing, float CustomYSpacing);
 
 	void ResetActorScales(TArray<FGridActorInfo> ResetArray);
 

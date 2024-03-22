@@ -49,7 +49,6 @@ Grid::Grid(TSubclassOf<AHexagon> HexagonBlueprintClass,int32 Size, float CustomX
                   ActorsInfo.Add(FGridActorInfo(Actor, Hex(x, y)));
             }
         }
-
     }
 }
 
